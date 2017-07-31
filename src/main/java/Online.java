@@ -50,6 +50,7 @@ public class Online {
 
         String date = Helper.getCurrentDate();
         String title;
+        String production_year;
 
         String s = given().param("external_id", "295").when().get("http://epg.megogo.net/channel/now").thenReturn().asString();
      //   System.out.println(s);
@@ -84,35 +85,45 @@ public class Online {
             Node p = programmeList.item(i);
             if(p.getNodeType() ==Node.ELEMENT_NODE){
                 Element program = (Element) p;
+
+                if(date.compareTo(program.getAttribute("start")) >= 0 &&
+                        date.compareTo(program.getAttribute("stop")) < 0){
+
                 String start = program.getAttribute("start");
                 String end = program.getAttribute("stop");
                 String genreId = program.getAttribute("genre_id");
-                //System.out.println(start+" | "+end+" | "+date);
 
                 Assert.assertTrue(date.compareTo(start) >= 0 && date.compareTo(end) < 0);
-                if(date.compareTo(start) >= 0 && date.compareTo(end) < 0) {
+                    if(date.compareTo(start) >= 0 && date.compareTo(end) < 0) {
 
-                    Assert.assertEquals(Helper.convetrToNewFormat(programStartTime), start);
-                    Assert.assertEquals(Helper.convetrToNewFormat(programEndTime), end);
-//                    Assert.assertEquals(programName, title);
+                        System.out.println("ProgramStartTime comparison");
+                        Assert.assertEquals(Helper.convertToNewFormat(programStartTime), start);
 
-                    if (programGenreId != null && genreId != null) {
-                        Assert.assertTrue(programGenreId.compareTo(genreId) == 0);
-                        Assert.assertEquals(Helper.convetrToNewFormat(programStartTime), start);
-                    }System.out.println("Genre Id is missing");
+                        System.out.println("ProgramEndTime comparison");
+                        Assert.assertEquals(Helper.convertToNewFormat(programEndTime), end);
 
-                    NodeList programChildNodeList = program.getChildNodes();
-                    for(int j=0; j<programChildNodeList.getLength(); j++){
-                        Node child = programChildNodeList.item(i);
-                        if(child.getNodeName().compareTo("title")==0){
-                            title = child.getTextContent();
-                            System.out.println(title);
-                            Assert.assertEquals(programName, title);
+                        System.out.println("ProgramGenreId comparison");
+                        if (programGenreId != null && genreId != "") {
+                            Assert.assertEquals(programGenreId, genreId);
+                        }else System.out.println("Genre ID is missing");
+
+                        NodeList programChildNodeList = program.getChildNodes();
+                        for (int j = 0; j < programChildNodeList.getLength(); j++) {
+                            Node child = programChildNodeList.item(j);
+                            if (child.getNodeName().compareTo("title") == 0) {
+                                title = child.getTextContent();
+                                System.out.println("ProgramTitle comparison");
+                                Assert.assertEquals(programName, title);
+                            }else if (child.getNodeName().compareTo("production_year") == 0){
+                                production_year = child.getTextContent();
+                                if( production_year != null && programProdYear != "") {
+                                    System.out.println("ProgramProdYear comparison");
+                                    Assert.assertEquals(programProdYear, production_year);
+                                }System.out.println("Program prod year is missing");
+                            }
                         }
-                    }
-
-                }System.out.println("Can't find matches on XML doc");
-                break;
+                    } else System.out.println("Can't find time matches");
+                }
             }
         }
     }
